@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0d12"><title>VALORANT Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="brand"><span class="brand-mark">V</span><span>VALORANT<br><b>ANALYTICS</b></span></div>
+  <div class="profile-mini"><div class="avatar">KA</div><div><strong id="sideName">Kaan#TR1</strong><small>DEMO PROFİLİ</small></div><span class="online"></span></div>
+  <nav>
+    <button class="nav active" data-page="overview"><i>▦</i> Genel Bakış</button>
+    <button class="nav" data-page="matches"><i>◷</i> Maç Geçmişi</button>
+    <button class="nav" data-page="agents"><i>◈</i> Ajan Analizi</button>
+    <button class="nav" data-page="maps"><i>⌖</i> Harita Analizi</button>
+    <button class="nav" data-page="compare"><i>⇄</i> Arkadaş Karşılaştır</button>
+  </nav>
+  <div class="sidebar-bottom"><div class="api-state"><span></span><div><b>DEMO MODU</b><small>Örnek veriler kullanılıyor</small></div></div><small class="version">BUILD 0.1.0 · V1</small></div>
+</aside>
+<main class="main">
+<header class="topbar"><div><div class="eyebrow">PERFORMANS MERKEZİ / <span id="crumb">GENEL BAKIŞ</span></div><h1 id="pageTitle">Oyuncu Özeti</h1></div><div class="top-actions"><span class="demo-pill">● DEMO VERİSİ</span><button class="icon-btn" id="refreshBtn" title="Demo verilerini yenile">↻</button><button class="user-chip" id="profileBtn"><span class="avatar small">KA</span><span id="topName">Kaan#TR1</span>⌄</button></div></header>
+<section class="page active" id="overview">
+  <div class="hero"><div><div class="eyebrow red">COMPETITIVE · ACT 06</div><h2>Performansın,<br><em>verilerle konuşsun.</em></h2><p>Son 20 karşılaşmanın, ajan tercihlerinin ve harita performansının tek merkezde.</p><button class="primary" data-go="matches">Maçları incele <b>↗</b></button></div><div class="hero-rank"><div class="rank-ring"><span>DIAMOND</span><b>2</b><small>DEMO RANK</small></div><div class="rank-caption">Güncel kademe <strong>Diamond II</strong></div></div></div>
+  <div class="section-head"><div><div class="eyebrow">SON 20 KARŞILAŞMA</div><h3>Performans özeti</h3></div><span class="muted">Son 20 maç · Tüm modlar hariç</span></div>
+  <div class="stats-grid">
+    <article class="stat-card"><div class="stat-label">WIN RATE <span>↗</span></div><div class="stat-value" id="winRate">—</div><div class="stat-foot"><span class="positive" id="winRecord">—</span><span>galibiyet oranı</span></div><div class="mini-bars" id="winBars"></div></article>
+    <article class="stat-card"><div class="stat-label">K/D ORANI <span>⌁</span></div><div class="stat-value" id="kd">—</div><div class="stat-foot"><span class="positive">Öldürme / Ölüm</span><span>ortalama</span></div><div class="sparkline" id="kdSpark"></div></article>
+    <article class="stat-card"><div class="stat-label">ORT. ACS <span>◎</span></div><div class="stat-value" id="acs">—</div><div class="stat-foot"><span class="positive">Combat Score</span><span>maç başına</span></div><div class="sparkline" id="acsSpark"></div></article>
+    <article class="stat-card"><div class="stat-label">TOPLAM MAÇ <span>▤</span></div><div class="stat-value" id="total">20</div><div class="stat-foot"><span>Competitive</span><span>son maçlar</span></div><div class="total-track"><i></i></div></article>
+  </div>
+  <div class="content-grid">
+    <article class="panel"><div class="panel-head"><div><div class="eyebrow">MAÇ TRENDİ</div><h3>Son karşılaşmalar</h3></div><button class="text-btn" data-go="matches">Tümünü gör ↗</button></div><div class="chart-legend"><span><i class="legend-win"></i> Galibiyet</span><span><i class="legend-loss"></i> Mağlubiyet</span></div><div class="match-trend" id="matchTrend"></div><div class="trend-labels"><span>20 maç önce</span><span>En son</span></div></article>
+    <article class="panel"><div class="panel-head"><div><div class="eyebrow">TERCİHİN</div><h3>En çok oynadığın ajan</h3></div><span class="tag">TOP PICK</span></div><div class="agent-feature"><div class="agent-art" id="topAgentArt">J</div><div><h2 id="topAgent">Jett</h2><p id="topAgentMeta">6 maç · %67 WR</p><span class="agent-role">DUELIST</span></div></div><div class="agent-foot"><span>Bu ajandaki K/D</span><b id="topAgentKd">1.28</b></div></article>
+  </div>
+  <div class="section-head compact"><div><div class="eyebrow">HARİTA PERFORMANSI</div><h3>En iyi olduğun haritalar</h3></div><button class="text-btn" data-go="maps">Detaylı analiz ↗</button></div>
+  <div class="map-grid" id="mapPreview"></div>
+</section>
+<section class="page" id="matches"><div class="section-head"><div><div class="eyebrow">MAÇ KAYITLARI</div><h3>Son 20 karşılaşma</h3></div><select id="matchFilter"><option value="all">Tüm sonuçlar</option><option value="win">Galibiyetler</option><option value="loss">Mağlubiyetler</option></select></div><div class="panel table-panel"><div class="match-table" id="matchTable"></div></div></section>
+<section class="page" id="agents"><div class="section-head"><div><div class="eyebrow">AJAN PERFORMANSI</div><h3>Ajan istatistikleri</h3></div><span class="muted">Son 20 maç</span></div><div class="agent-grid" id="agentGrid"></div></section>
+<section class="page" id="maps"><div class="section-head"><div><div class="eyebrow">HARİTA PERFORMANSI</div><h3>Harita bazlı Win Rate</h3></div><span class="muted">Son 20 maç</span></div><div class="map-analysis-grid" id="mapGrid"></div></section>
+<section class="page" id="compare"><div class="section-head"><div><div class="eyebrow">TOPLULUK</div><h3>Arkadaşlarınla karşılaştır</h3></div><span class="muted">Herkese açık demo profilleri</span></div><div class="compare-controls"><label>Oyuncu seç<select id="friendSelect"></select></label><div class="compare-note">Demo profilleri · Gerçek kullanıcı hesabı bağlantısı V2 aşamasında</div></div><div class="compare-grid" id="compareGrid"></div></section>
+<footer>VALORANT ANALYTICS <span>UNOFFICIAL COMMUNITY PROJECT · NOT AFFILIATED WITH RIOT GAMES</span></footer>
+</main>
+</div>
+<script src="src/app.js"></script>
+</body></html>
