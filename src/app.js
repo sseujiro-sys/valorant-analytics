@@ -27,3 +27,217 @@ function renderMaps(){let mg=Object.entries(group(matches,"map")).sort((a,b)=>wr
 function renderCompare(){let friend=profiles[$("#friendSelect").selectedIndex+1]||profiles[1],a=metrics(matches),b=metrics(friend.matches);const row=(label,x,y,better)=>`<div class="compare-stat"><span>${label}</span><b class="${better(x,y)?"better":""}">${x}</b><b class="${better(y,x)?"better":""}">${y}</b></div>`;$("#compareGrid").innerHTML=[current,friend].map(p=>`<div class="compare-card"><h3>${p.name} <span class="sub">${p.rank}</span></h3><div class="compare-stat"><span>İSTATİSTİK</span><b>DEĞER</b><b> </b></div>${row("Win Rate",pct(a.wr),pct(b.wr),(x,y)=>parseInt(x)>parseInt(y))}${row("K/D",a.kd.toFixed(2),b.kd.toFixed(2),(x,y)=>+x>+y)}${row("Ortalama ACS",Math.round(a.acs),Math.round(b.acs),(x,y)=>+x>+y)}${row("Galibiyet",a.wins,b.wins,(x,y)=>+x>+y)}</div>`).join("")}
 function go(page){$$(".page").forEach(p=>p.classList.toggle("active",p.id===page));$$(".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===page));let labels={overview:["Oyuncu Özeti","GENEL BAKIŞ"],matches:["Maç Geçmişi","MAÇ GEÇMİŞİ"],agents:["Ajan Analizi","AJAN ANALİZİ"],maps:["Harita Analizi","HARİTA ANALİZİ"],compare:["Arkadaş Karşılaştır","KARŞILAŞTIRMA"]};$("#pageTitle").textContent=labels[page][0];$("#crumb").textContent=labels[page][1];}
 $$(".nav").forEach(n=>n.addEventListener("click",()=>go(n.dataset.page)));$$("[data-go]").forEach(n=>n.addEventListener("click",()=>go(n.dataset.go)));$("#matchFilter").addEventListener("change",renderMatches);$("#friendSelect").innerHTML=profiles.slice(1).map(p=>`<option>${p.name}</option>`).join("");$("#friendSelect").addEventListener("change",renderCompare);$("#refreshBtn").addEventListener("click",()=>{renderOverview();renderMatches();renderAgents();renderMaps();renderCompare();$("#refreshBtn").textContent="✓";setTimeout(()=>$("#refreshBtn").textContent="↻",700)});$("#profileBtn").addEventListener("click",()=>alert("V1 demo profili: Kaan#TR1\nGerçek Riot hesabı bağlantısı V2 aşamasında."));renderOverview();renderMatches();renderAgents();renderMaps();renderCompare();
+
+
+// ===== SUPABASE KULLANICI HESABI SİSTEMİ =====
+(() => {
+  const client = supabase.createClient(
+    window.SUPABASE_URL,
+    window.SUPABASE_PUBLISHABLE_KEY
+  );
+
+  let authMode = "login";
+
+  const style = document.createElement("style");
+  style.textContent = `
+    .auth-overlay {
+      position:fixed; inset:0; z-index:9999;
+      display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.82); padding:20px;
+    }
+    .auth-overlay.open { display:flex; }
+    .auth-box {
+      width:100%; max-width:420px; padding:30px;
+      background:#151922; border:1px solid #343b49;
+      border-radius:14px; color:#fff;
+    }
+    .auth-box h2 { margin:0 0 8px; font-size:28px; }
+    .auth-box p { color:#9ba4b5; margin-bottom:22px; }
+    .auth-box label { display:block; margin:14px 0 6px; color:#cbd0da; }
+    .auth-box input {
+      width:100%; padding:13px; border-radius:7px;
+      border:1px solid #394252; background:#0d1119;
+      color:white; box-sizing:border-box;
+    }
+    .auth-box button {
+      cursor:pointer; padding:12px; border:0;
+      border-radius:7px; font-weight:700;
+    }
+    .auth-submit {
+      width:100%; margin-top:20px;
+      background:#ff4655; color:white;
+    }
+    .auth-switch {
+      background:transparent; color:#ff6975;
+      margin-top:12px; width:100%;
+    }
+    .auth-close {
+      float:right; background:transparent; color:white;
+      font-size:20px;
+    }
+    .auth-message { margin-top:14px; font-size:13px; color:#f2c66d; }
+    .auth-logout {
+      width:100%; margin-top:12px;
+      background:#303847; color:white;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const overlay = document.createElement("div");
+  overlay.className = "auth-overlay";
+  overlay.innerHTML = `
+    <div class="auth-box">
+      <button class="auth-close" type="button">✕</button>
+      <div class="eyebrow red">VALORANT ANALYTICS</div>
+      <h2 id="authTitle">Hesabına giriş yap</h2>
+      <p id="authDescription">İstatistiklerini takip etmek için giriş yap.</p>
+      <form id="authForm">
+        <label for="authEmail">E-posta</label>
+        <input id="authEmail" type="email" required placeholder="ornek@mail.com">
+        <label for="authPassword">Şifre</label>
+        <input id="authPassword" type="password" required minlength="6" placeholder="En az 6 karakter">
+        <label id="authNameLabel" for="authName" style="display:none">Görünen ad</label>
+        <input id="authName" type="text" placeholder="Oyuncu adın" style="display:none">
+        <button class="auth-submit" id="authSubmit" type="submit">GİRİŞ YAP</button>
+      </form>
+      <button class="auth-switch" id="authSwitch" type="button">Hesabın yok mu? Kayıt ol</button>
+      <button class="auth-logout" id="authLogout" type="button" style="display:none">ÇIKIŞ YAP</button>
+      <div class="auth-message" id="authMessage"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const el = id => document.getElementById(id);
+  const message = text => el("authMessage").textContent = text;
+
+  function setMode(mode) {
+    authMode = mode;
+    el("authTitle").textContent = mode === "login" ? "Hesabına giriş yap" : "Yeni hesap oluştur";
+    el("authDescription").textContent = mode === "login"
+      ? "İstatistiklerini takip etmek için giriş yap."
+      : "VALORANT Analytics topluluğuna katıl.";
+    el("authSubmit").textContent = mode === "login" ? "GİRİŞ YAP" : "KAYIT OL";
+    el("authSwitch").textContent = mode === "login"
+      ? "Hesabın yok mu? Kayıt ol"
+      : "Zaten hesabın var mı? Giriş yap";
+    el("authName").style.display = mode === "signup" ? "block" : "none";
+    el("authNameLabel").style.display = mode === "signup" ? "block" : "none";
+    el("authName").required = mode === "signup";
+    message("");
+  }
+
+  function openModal() {
+    overlay.classList.add("open");
+    message("");
+  }
+
+  function closeModal() {
+    overlay.classList.remove("open");
+  }
+
+  el("authSwitch").addEventListener("click", () => {
+    setMode(authMode === "login" ? "signup" : "login");
+  });
+
+  overlay.querySelector(".auth-close").addEventListener("click", closeModal);
+  overlay.addEventListener("click", e => {
+    if (e.target === overlay) closeModal();
+  });
+
+  el("authForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const email = el("authEmail").value.trim();
+    const password = el("authPassword").value;
+    const displayName = el("authName").value.trim();
+
+    el("authSubmit").disabled = true;
+    message("İşlem yapılıyor...");
+
+    try {
+      if (authMode === "signup") {
+        const { data, error } = await client.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { display_name: displayName }
+          }
+        });
+        if (error) throw error;
+
+        if (data.session) {
+          message("Hesabın oluşturuldu!");
+        } else {
+          message("Kayıt başarılı! E-posta adresine gelen doğrulama bağlantısına tıkla.");
+        }
+      } else {
+        const { error } = await client.auth.signInWithPassword({
+          email,
+          password
+        });
+        if (error) throw error;
+        message("Giriş başarılı!");
+        closeModal();
+      }
+    } catch (error) {
+      message("Hata: " + error.message);
+    } finally {
+      el("authSubmit").disabled = false;
+    }
+  });
+
+  el("authLogout").addEventListener("click", async () => {
+    const { error } = await client.auth.signOut();
+    if (error) message("Çıkış yapılamadı: " + error.message);
+    else {
+      message("Çıkış yapıldı.");
+      closeModal();
+    }
+  });
+
+  async function updateUser(user) {
+    const name = user
+      ? (user.user_metadata?.display_name || user.email)
+      : "Misafir";
+
+    ["topName", "sideName"].forEach(id => {
+      const node = document.getElementById(id);
+      if (node) node.textContent = name;
+    });
+
+    el("authLogout").style.display = user ? "block" : "none";
+    el("authSwitch").style.display = user ? "none" : "block";
+    el("authForm").style.display = user ? "none" : "block";
+
+    el("authTitle").textContent = user ? "Hesabın" : "Hesabına giriş yap";
+    el("authDescription").textContent = user
+      ? "Oturumun açık."
+      : "İstatistiklerini takip etmek için giriş yap.";
+  }
+
+  // Eski demo profil uyarısını kaldırıp yeni hesap penceresini bağla.
+  const oldButton = document.getElementById("profileBtn");
+  const newButton = oldButton.cloneNode(true);
+  oldButton.parentNode.replaceChild(newButton, oldButton);
+  newButton.addEventListener("click", async () => {
+  const { data: { user } } = await client.auth.getUser();
+  if (user && window.openValorantProfile) {
+    window.openValorantProfile();
+  } else {
+    openModal();
+  }
+});
+
+  client.auth.onAuthStateChange((_event, session) => {
+    updateUser(session?.user || null);
+  });
+
+  client.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      console.error("Oturum kontrolü:", error.message);
+      return;
+    }
+    updateUser(data.session?.user || null);
+  });
+
+  window.valorantSupabase = client;
+})();
